@@ -31,9 +31,9 @@ public class NewsFilter {
                 String line = scanner.nextLine();
                 blackList.add(line);
             }
-            } catch(Exception e){
-                e.printStackTrace();
-            }
-        return blackList;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return blackList;
     }
+}
