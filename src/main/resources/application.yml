@@ -1,0 +1,29 @@
+server:
+  port: 9000
+  shutdown: graceful
+  tomcat:
+    connection-timeout: 2s
+    keep-alive-timeout: 15s
+    threads:
+      max: 50
+      min-spare: 5
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres_db
+    username: user
+    password: password
+    hikari:
+      connection-timeout: 2000
+      maximum-pool-size: 10
+
+recordings:
+  url: "https://api.spaceflightnewsapi.net/v3/articles"
+
+pool:
+  size: 6
+
+download:
+  totalLimit: 1000
+  bufferNewsLimit: 10
+  limit: 50
