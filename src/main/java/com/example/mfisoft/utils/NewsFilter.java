@@ -16,14 +16,14 @@ public class NewsFilter {
 
     public boolean isValid(Recordings recordings, Set<String> blackList) {
         for (String s : blackList) {
-            if (!recordings.title().toLowerCase().contains(s.toLowerCase())) {
-                return true;
+            if (recordings.title().toLowerCase().contains(s.toLowerCase())) {
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
-    public Set<String> createBlackList() throws URISyntaxException {
+    public Set<String> createBlackList() throws Exception {
         Set<String> blackList = new CopyOnWriteArraySet<>();
         File file = new File(getClass().getResource("/blacklist.txt").toURI());
         try (Scanner scanner = new Scanner(new FileInputStream(file))) {

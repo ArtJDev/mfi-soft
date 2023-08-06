@@ -21,9 +21,9 @@ recordings:
   url: "https://api.spaceflightnewsapi.net/v3/articles"
 
 pool:
-  size: 6
+  size: 11
 
 download:
-  totalLimit: 1000
-  bufferNewsLimit: 10
-  limit: 50
+  totalLimit: 100
+  bufferNewsLimit: 5
+  limit: 10

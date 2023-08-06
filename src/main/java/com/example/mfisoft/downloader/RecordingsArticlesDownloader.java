@@ -35,13 +35,12 @@ public class RecordingsArticlesDownloader {
     private Integer bufferNewsLimit;
     @Value("${download.limit}")
     private Integer limit;
-    private AtomicInteger start = new AtomicInteger(0);
-    private AtomicInteger count = new AtomicInteger(0);
-    private Map<String, List<Recordings>> recordingsBuffer = new ConcurrentHashMap<>();
+    private final AtomicInteger start = new AtomicInteger(0);
+    private final AtomicInteger count = new AtomicInteger(0);
+    private final Map<String, List<Recordings>> recordingsBuffer = new ConcurrentHashMap<>();
     private final NewsFilter newsFilter;
     private final RecordingsRequester recordingsRequester;
     private final ArticlesRepository articlesRepository;
-//    private ObjectMapper mapper = new ObjectMapper();
 
     public RecordingsArticlesDownloader(NewsFilter newsFilter, RecordingsRequester recordingsRequester,
                                         ArticlesRepository articlesRepository) {
@@ -52,13 +51,13 @@ public class RecordingsArticlesDownloader {
 
     @EventListener(ApplicationReadyEvent.class)
     public void run() throws Exception {
-        CloseableHttpClient httpClient = HttpClients.createDefault();
         ForkJoinPool pool = new ForkJoinPool(POOL_SIZE);
         Set<String> blackList = newsFilter.createBlackList();
 
-        while (count.intValue() > totalLimit) {
-            CompletableFuture.runAsync(() -> {
+        CompletableFuture.runAsync(() -> {
+            while (count.intValue() <= totalLimit) {
                 List<Recordings> recordings = recordingsRequester.getRecords(new Params(limit, start.getAndAdd(limit)));
+                count.getAndAdd(limit);
                 Map<String, List<Recordings>> updatedRecordings = recordings.parallelStream()
                         .filter(r -> newsFilter.isValid(r, blackList))
                         .sorted(Comparator.comparing(Recordings::publishedAt))
@@ -66,28 +65,31 @@ public class RecordingsArticlesDownloader {
                 if (!recordingsBuffer.isEmpty()) {
                     for (Map.Entry<String, List<Recordings>> bufferEntry : recordingsBuffer.entrySet()) {
                         if (bufferEntry.getValue().size() >= bufferNewsLimit) {
-                            bufferEntry.getValue().forEach(records -> {
-                                HttpGet request = new HttpGet(records.url());
-                                request.setHeader(HttpHeaders.ACCEPT, ContentType.TEXT_HTML.getMimeType());
-                                try {
-                                    CloseableHttpResponse response = httpClient.execute(request);
-                                    byte[] article = response.getEntity().getContent().readAllBytes();
-                                    articlesRepository.save(new Article(null,
-                                            records.title(),
-                                            records.newsSite(),
-                                            records.publishedAt(),
-                                            article));
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            });
+                            bufferEntry.getValue().forEach(this::saveArticle);
                             recordingsBuffer.remove(bufferEntry.getKey());
                         }
                     }
                 }
                 recordingsBuffer.putAll(recordingsToBuffer(updatedRecordings));
-                recordingsBuffer.forEach((key, value) -> count.getAndAdd(value.size()));
-            }, pool);
+            }
+            recordingsBuffer.forEach((key, value) -> value.forEach(this::saveArticle));
+            recordingsBuffer.clear();
+        }, pool);
+    }
+
+    private void saveArticle(Recordings recordings) {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(recordings.url());
+            request.setHeader(HttpHeaders.ACCEPT, ContentType.TEXT_HTML.getMimeType());
+            CloseableHttpResponse response = httpClient.execute(request);
+            byte[] article = response.getEntity().getContent().readAllBytes();
+            articlesRepository.save(new Article(null,
+                    recordings.title(),
+                    recordings.newsSite(),
+                    recordings.publishedAt(),
+                    article));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

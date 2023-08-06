@@ -1,29 +1,27 @@
 package com.example.mfisoft.proxies;
 
 public class Params {
+    int _limit;
+    int _start;
 
-    Integer _limit;
-
-    Integer _start;
-
-    public Params(Integer _limit, Integer _start) {
+    public Params(int _limit, int _start) {
         this._limit = _limit;
         this._start = _start;
     }
 
-    public Integer get_limit() {
+    public int get_limit() {
         return _limit;
     }
 
-    public void set_limit(Integer _limit) {
+    public void set_limit(int _limit) {
         this._limit = _limit;
     }
 
-    public Integer get_start() {
+    public int get_start() {
         return _start;
     }
 
-    public void set_start(Integer _start) {
+    public void set_start(int _start) {
         this._start = _start;
     }
 }

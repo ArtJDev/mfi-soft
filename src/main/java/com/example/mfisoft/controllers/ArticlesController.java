@@ -4,6 +4,7 @@ import com.example.mfisoft.entities.Article;
 
 import com.example.mfisoft.exceptions.NotFoundException;
 import com.example.mfisoft.repository.ArticlesRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,14 +24,14 @@ public class ArticlesController {
         return articlesRepository.findAll();
     }
 
-    @GetMapping("{id}")
-    public Article getArticleById(@PathVariable("id") Long id) {
-        return articlesRepository.findById(id).orElseThrow(NotFoundException::new);
+    @GetMapping("/id/{id}")
+    public ResponseEntity<?> getArticleById(@PathVariable("id") Long id) {
+        Article article = articlesRepository.findById(id).orElseThrow(NotFoundException::new);
+        return ResponseEntity.ok(article.article());
     }
 
-    @GetMapping("{newsSite}")
+    @GetMapping("/newsSite/{newsSite}")
     public Iterable<Article> getArticleByNewsSite(@PathVariable("newsSite") String newsSite) {
         return articlesRepository.findAllByNewsSite(newsSite);
     }
-
 }
